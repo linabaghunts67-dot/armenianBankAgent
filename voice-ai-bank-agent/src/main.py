@@ -4,11 +4,8 @@ from src.voice.tts import speak
 from src.livekit_agent import LiveKitAgent
 
 
-def run():
+def run(agent):
     data = load_data()
-
-    agent = LiveKitAgent()
-    agent.start()
 
     while True:
         user_input = listen()
@@ -26,4 +23,10 @@ def run():
 
 
 if __name__ == "__main__":
-    run()
+    agent = LiveKitAgent()
+    agent.start()
+
+    try:
+        run(agent)
+    finally:
+        agent.stop()
