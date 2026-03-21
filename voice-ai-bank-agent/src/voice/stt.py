@@ -1,55 +1,34 @@
+"""
+stt.py — Speech-to-Text using Google Speech Recognition with Armenian locale.
+
+Uses the SpeechRecognition library with Google's backend (hy-AM locale).
+This is the fallback CLI mode. The LiveKit agent uses Deepgram for real-time STT.
+"""
+
 import speech_recognition as sr
 
 
-class SpeechToText:
-    """
-    Robust Speech-to-Text handler with:
-    - noise adjustment
-    - timeout handling
-    - error handling
-    - Armenian support
-    """
+def listen() -> str:
+    """Listen from the microphone and return Armenian transcription."""
+    recognizer = sr.Recognizer()
+    recognizer.pause_threshold = 1.0  
 
-    def __init__(self):
-        self.recognizer = sr.Recognizer()
-
-    def listen(self) -> str:
-        with sr.Microphone() as source:
-            print("Speak...")
-
-            self.recognizer.adjust_for_ambient_noise(source, duration=0.5)
-
-            try:
-                audio = self.recognizer.listen(
-                    source,
-                    timeout=5,       
-                    phrase_time_limit=8 
-                )
-
-            except sr.WaitTimeoutError:
-                print("[STT] No speech detected.")
-                return ""
-
+    with sr.Microphone() as source:
+        print("Խոսեք... (Speak in Armenian)")
+        recognizer.adjust_for_ambient_noise(source, duration=0.5)
         try:
-            text = self.recognizer.recognize_google(
-                audio,
-                language="hy-AM"
-            )
-
-            print("Դու:", text)
-            return text
-
-        except sr.UnknownValueError:
-            print("[STT] Could not understand audio.")
+            audio = recognizer.listen(source, timeout=10, phrase_time_limit=15)
+        except sr.WaitTimeoutError:
+            print("⏱ Timeout — no speech detected.")
             return ""
 
-        except sr.RequestError as e:
-            print(f"[STT] API error: {e}")
-            return ""
-
-
-stt_instance = SpeechToText()
-
-
-def listen():
-    return stt_instance.listen()
+    try:
+        text = recognizer.recognize_google(audio, language="hy-AM")
+        print(f"Դուք: {text}")
+        return text
+    except sr.UnknownValueError:
+        print("Could not understand audio.")
+        return ""
+    except sr.RequestError as e:
+        print(f"STT service error: {e}")
+        return ""
