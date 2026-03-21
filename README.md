@@ -6,6 +6,7 @@
   <img src="https://img.shields.io/badge/Python-3.10+-blue?style=flat-square"/>
   <img src="https://img.shields.io/badge/OpenAI-GPT--4o--mini-black?style=flat-square"/>
   <img src="https://img.shields.io/badge/Voice-AI-orange?style=flat-square"/>
+  <img src="https://img.shields.io/badge/Status-Internship--Ready-success?style=flat-square"/>
 </p>
 
 ---
@@ -20,25 +21,17 @@ The system simulates a real-world fintech AI agent by enforcing:
 * response constraints
 * modular architecture
 
-This ensures **reliable, explainable, and safe AI behavior**, avoiding hallucinations and maintaining full control over outputs.
+This ensures **reliable and safe AI behavior**, avoiding hallucinations.
 
 ---
 
 ## ✨ Key Features
 
-*  **Context-Constrained LLM**
-  Answers are generated strictly from structured bank data
-
-*  **Full Voice Pipeline**
-  Speech-to-Text → AI → Text-to-Speech
-
-*  **Armenian Language Support**
-
-*  **Strict Guardrails**
-  Out-of-scope queries are safely rejected
-
-*  **Modular Architecture**
-  Clean separation between AI, voice, and data components
+* Context-Constrained LLM
+* Full Voice Pipeline (STT → AI → TTS)
+* Armenian Language Support
+* Guardrails (no hallucinations)
+* Modular Architecture
 
 ---
 
@@ -46,7 +39,7 @@ This ensures **reliable, explainable, and safe AI behavior**, avoiding hallucina
 
 ### System Architecture
 
-```text
+```
 User Speech
    ↓
 Speech-to-Text (SpeechRecognition)
@@ -64,127 +57,83 @@ Voice Output
 
 ### Design Overview
 
-The project follows a **modular architecture**:
-
-* `ai.py` → AI logic, prompt construction, guardrails
-* `voice/stt.py` → Speech-to-text processing
-* `voice/tts.py` → Text-to-speech output
-* `livekit_agent.py` → Real-time voice system integration layer
-* `bank_data.json` → Structured knowledge base
-
-This design enables:
-
-* scalability
-* maintainability
-* easy extension (e.g., adding new banks or upgrading to RAG)
+* `ai.py` → AI logic and guardrails
+* `voice/stt.py` → Speech-to-text
+* `voice/tts.py` → Text-to-speech
+* `livekit_agent.py` → Real-time agent layer
+* `data/bank_data.json` → Knowledge base
 
 ---
 
-### Context-Based AI (Core Design Choice)
+### Model Choice
 
-Instead of relying on general model knowledge:
-
-* All banking data is stored in a JSON file
-* The data is injected directly into the prompt
-* The model is instructed to answer **only using this context**
-
-This ensures:
-
-* no hallucinations
-* full control over answers
-* predictable system behavior
+* **gpt-4o-mini** → fast, cost-efficient, supports Armenian
 
 ---
 
-### Guardrails & Safety
-
-To enforce safe and reliable responses:
+### Guardrails
 
 * Allowed topics:
 
   * credits
   * deposits
   * branch locations
-* Out-of-scope questions →
+* Out-of-scope →
   **"Ես չեմ կարող պատասխանել այդ հարցին"**
-
-The model is explicitly restricted from using external knowledge.
-
----
-
-### Model Choice
-
-**Model used:** `gpt-4o-mini`
-
-Chosen because:
-
-* fast and efficient (low latency for voice interaction)
-* strong multilingual capabilities (supports Armenian)
-* cost-effective for real-time use
-
----
-
-### Voice Stack Design
-
-* **SpeechRecognition** → lightweight speech-to-text
-* **pyttsx3** → offline text-to-speech (reliable, no API dependency)
-* **LiveKit (integration layer)** → included to support real-time voice system design and future streaming upgrades
-
----
-
-### Scalability
-
-The system is designed to scale easily:
-
-* Add new banks → extend JSON
-* Add new topics → update dataset + prompt
-* Upgrade to RAG → replace JSON with vector database
-* Real-time streaming → extend LiveKit integration
 
 ---
 
 ## 📁 Project Structure
 
-```text
-voice-ai-bank-agent/
+```
+armenianBankAgent/
 │
-├── data/
-│   └── bank_data.json
-│
-├── src/
-│   ├── main.py
-│   ├── ai.py
-│   ├── livekit_agent.py
-│   └── voice/
-│       ├── stt.py
-│       └── tts.py
-│
-├── requirements.txt
-├── .env
-├── .gitignore
-└── README.md
+└── voice-ai-bank-agent/
+    │
+    ├── data/
+    │   └── bank_data.json
+    │
+    ├── src/
+    │   ├── main.py
+    │   ├── ai.py
+    │   ├── livekit_agent.py
+    │   └── voice/
+    │       ├── stt.py
+    │       └── tts.py
+    │
+    ├── requirements.txt
+    ├── .env
+    └── README.md
 ```
 
 ---
 
-## ⚙️ Setup Instructions
+# ⚙️ Setup & Run Guide
 
-### 1. Clone the repository
+## 1. Clone the repository
 
 ```bash
-git clone https://github.com/linabaghunts67-dot/armenian_bank_AI.git
-cd armenian_bank_AI
+git clone https://github.com/linabaghunts67-dot/armenianBankAgent.git
+cd armenianBankAgent
 ```
 
 ---
 
-### 2. Create a virtual environment (recommended)
+## 2. Go into the project folder
+
+```bash
+cd voice-ai-bank-agent
+```
+
+---
+
+## 3. Create virtual environment (recommended)
 
 ```bash
 python -m venv venv
 ```
 
-Activate:
+### Activate:
 
 **Windows**
 
@@ -200,7 +149,7 @@ source venv/bin/activate
 
 ---
 
-### 3. Install dependencies
+## 4. Install dependencies
 
 ```bash
 pip install -r requirements.txt
@@ -208,16 +157,15 @@ pip install -r requirements.txt
 
 ---
 
-### 4. Configure environment variables
+## 5. Create `.env` file
 
-Create a `.env` file in the root directory:
+Create a file named `.env` inside `voice-ai-bank-agent/`:
 
-```env
+```
 OPENAI_API_KEY=your_api_key_here
 ```
 
-⚠️ Do not include quotes
-⚠️ Do not upload `.env` to GitHub
+⚠️ Do NOT upload `.env` to GitHub
 
 ---
 
@@ -229,12 +177,12 @@ python -m src.main
 
 ---
 
-## 🧪 Example Interaction
+## 🧪 Example
 
-```text
+```
 🎤 Speak...
-Դու: Ի՞նչ վարկեր ունի Ամերիաբանկը
-AI: Ամերիաբանկը տրամադրում է սպառողական և հիփոթեքային վարկեր...
+Դու: Ի՞նչ ավանդներ ունի Ամերիաբանկը
+AI: Ամերիաբանկում հնարավոր է բացել ժամկետային ավանդներ...
 ```
 
 ---
@@ -245,7 +193,7 @@ AI: Ամերիաբանկը տրամադրում է սպառողական և հի�
 * OpenAI GPT-4o-mini
 * SpeechRecognition
 * pyttsx3
-* LiveKit (integration layer)
+* LiveKit (lightweight integration)
 * python-dotenv
 
 ---
@@ -253,23 +201,12 @@ AI: Ամերիաբանկը տրամադրում է սպառողական և հի�
 ## 📈 Future Improvements
 
 * Full LiveKit real-time streaming
-* Vector database (RAG pipeline)
-* Web interface (FastAPI / Streamlit)
-* Expanded dataset with detailed bank information
-
----
-
-## ⭐ Project Value
-
-This project demonstrates:
-
-* practical LLM system design
-* controlled AI generation (no hallucinations)
-* voice-based interaction pipeline
-* readiness for real-world AI applications
-
+* RAG (vector database)
+* Web interface
+* Expanded dataset
+  
 ---
 
 <p align="center">
-  ⭐ If you find this project useful, consider starring the repository ⭐
+  ⭐ If you find this project useful, consider starring the repo ⭐
 </p>
