@@ -26,18 +26,18 @@ This ensures **reliable, explainable, and safe AI behavior**, avoiding hallucina
 
 ## ✨ Key Features
 
-* 🧠 **Context-Constrained LLM**
+*  **Context-Constrained LLM**
   Answers are generated strictly from structured bank data
 
-* 🎤 **Full Voice Pipeline**
+*  **Full Voice Pipeline**
   Speech-to-Text → AI → Text-to-Speech
 
-* 🇦🇲 **Armenian Language Support**
+*  **Armenian Language Support**
 
-* 🔒 **Strict Guardrails**
+*  **Strict Guardrails**
   Out-of-scope queries are safely rejected
 
-* 🧩 **Modular Architecture**
+*  **Modular Architecture**
   Clean separation between AI, voice, and data components
 
 ---
