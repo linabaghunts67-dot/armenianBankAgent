@@ -113,7 +113,7 @@ armenianBankAgent/
 
 ```bash
 git clone https://github.com/linabaghunts67-dot/armenianBankAgent.git
-cd armenianBankAgent
+cd armenianBankAgent/voice-ai-bank-agent
 ```
 
 ---
