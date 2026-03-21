@@ -1,7 +1,17 @@
-openai
-python-dotenv
-sounddevice
-numpy
-pyttsx3
-SpeechRecognition
-livekit
+# Core AI
+openai>=1.30.0
+python-dotenv>=1.0.0
+
+# LiveKit open-source agent framework (NOT LiveKit Cloud)
+livekit-agents>=0.8.0
+livekit-plugins-openai>=0.8.0
+livekit-plugins-deepgram>=0.6.0
+livekit-plugins-silero>=0.6.0
+
+# CLI mode STT (fallback, local testing only)
+SpeechRecognition>=3.10.0
+PyAudio>=0.2.13
+
+# Web scraper
+requests>=2.31.0
+beautifulsoup4>=4.12.0
