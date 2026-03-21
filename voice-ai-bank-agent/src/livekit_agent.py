@@ -1,58 +1,90 @@
-import threading
-import time
+"""
+livekit_agent.py — Real LiveKit open-source agent using livekit-agents SDK.
+
+Architecture:
+  User microphone → LiveKit room (STT via Deepgram) → GPT-4o-mini (context-grounded)
+  → TTS via OpenAI TTS → LiveKit room → User speaker
+
+Why these models:
+  - Deepgram Nova-2: best Armenian STT available via LiveKit plugin, low latency
+  - GPT-4o-mini: supports Armenian, fast, cheap, sufficient for constrained Q&A
+  - OpenAI TTS (alloy): supports Armenian output reliably, unlike pyttsx3 which has no Armenian voice
+"""
+
+import json
+import os
+import asyncio
+from dotenv import load_dotenv
+
+from livekit.agents import AutoSubscribe, JobContext, WorkerOptions, cli, llm
+from livekit.agents.voice_assistant import VoiceAssistant
+from livekit.plugins import deepgram, openai, silero
+
+load_dotenv()
+
+BANK_DATA_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "bank_data.json")
 
 
-class LiveKitAgent:
-    """
-    Lightweight LiveKit-style agent simulation.
+def load_bank_context() -> str:
+    """Load scraped bank data and format as context string."""
+    with open(BANK_DATA_PATH, "r", encoding="utf-8") as f:
+        data = json.load(f)
 
-    Purpose:
-    - Represents real-time voice session handling
-    - Keeps architecture aligned with LiveKit-based systems
-    - Avoids heavy setup while demonstrating design understanding
-    """
+    context_blocks = []
+    for entry in data:
+        context_blocks.append(
+            f"Բանկ: {entry['bank']}\nՈլորտ: {entry['topic']}\nՏեղեկություն: {entry['content']}"
+        )
+    return "\n\n".join(context_blocks)
 
-    def __init__(self):
-        self.is_running = False
-        self.session_thread = None
 
-    def start(self):
-        """
-        Starts a simulated LiveKit session loop.
-        """
-        if self.is_running:
-            print("[LiveKit] Session already running.")
-            return
+def build_system_prompt() -> str:
+    context = load_bank_context()
+    return f"""Դու հայկական բանկային AI օգնական ես։
 
-        print("[LiveKit] Initializing agent...")
-        self.is_running = True
+ԽԻՍՏ ԿԱՆՈՆՆԵՐ:
+- Պատասխանիր ԲԱՑԱՌԱՊԵՍ ստորև տրված բանկային տվյալների հիման վրա։
+- Թույլատրված թեմաներ: վարկեր (credits), ավանդներ (deposits), մասնաճյուղերի հասցեներ (branch locations)։
+- Եթե հարցը վերաբերում է այլ թեմայի → պատասխանիր. "Ես չեմ կարող պատասխանել այդ հարցին։ Կարող եմ օգնել միայն վարկերի, ավանդների և մասնաճյուղերի վերաբերյալ հարցերում։"
+- ՄԻ օգտագործիր արտաքին գիտելիքներ կամ ենթադրություններ։
+- Պատասխանիր հայերեն։
+- Կարճ, հստակ, ճշգրիտ պատասխաններ տուր։
 
-        # Start background thread to simulate real-time session
-        self.session_thread = threading.Thread(target=self._run_session, daemon=True)
-        self.session_thread.start()
+ԲԱՆԿԱՅԻՆ ՏՎՅԱԼՆԵՐ (միայն սրանք օգտագործիր):
+{context}
+"""
 
-    def _run_session(self):
-        """
-        Simulated real-time session loop.
-        """
-        print("[LiveKit] Session started. Listening for audio streams...")
 
-        while self.is_running:
-            # Simulate heartbeat / real-time connection
-            time.sleep(2)
-            print("[LiveKit] Session active...")
+async def entrypoint(ctx: JobContext):
+    """Main LiveKit agent entrypoint — called when a user connects to the room."""
 
-    def stop(self):
-        """
-        Stops the session cleanly.
-        """
-        if not self.is_running:
-            return
+    system_prompt = build_system_prompt()
 
-        print("[LiveKit] Stopping session...")
-        self.is_running = False
+    initial_chat_ctx = llm.ChatContext().append(
+        role="system",
+        text=system_prompt,
+    )
 
-        if self.session_thread:
-            self.session_thread.join(timeout=1)
+    await ctx.connect(auto_subscribe=AutoSubscribe.AUDIO_ONLY)
 
-        print("[LiveKit] Session stopped.")
+    assistant = VoiceAssistant(
+        vad=silero.VAD.load(),                          
+        stt=deepgram.STT(language="hy"),                
+        llm=openai.LLM(model="gpt-4o-mini"),            
+        tts=openai.TTS(voice="alloy"),                
+        chat_ctx=initial_chat_ctx,
+    )
+
+    assistant.start(ctx.room)
+
+    await asyncio.sleep(1)
+    await assistant.say(
+        "Բարև ձեզ։ Ես հայկական բանկային AI օգնականն եմ։ Կարող եմ օգնել վարկերի, ավանդների և մասնաճյուղերի վերաբերյալ հարցերում։",
+        allow_interruptions=True,
+    )
+
+
+if __name__ == "__main__":
+    cli.run_app(
+        WorkerOptions(entrypoint_fnc=entrypoint)
+    )
