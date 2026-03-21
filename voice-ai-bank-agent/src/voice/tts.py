@@ -1,52 +1,42 @@
-import pyttsx3
+"""
+tts.py — Text-to-Speech using OpenAI TTS API.
+
+Why OpenAI TTS instead of pyttsx3:
+  pyttsx3 relies on the OS's built-in voice engine (espeak / SAPI).
+  No major OS ships an Armenian voice, so pyttsx3 would either fail silently
+  or speak English phonetics. OpenAI TTS (model tts-1, voice "alloy") supports
+  Armenian text natively with natural pronunciation.
+"""
+
+import os
+import tempfile
+import subprocess
+from openai import OpenAI
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
-class TextToSpeech:
-    """
-    Improved TTS with:
-    - voice selection
-    - speed control
-    - stability
-    """
+def speak(text: str) -> None:
+    """Convert Armenian text to speech and play it."""
+    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-    def __init__(self):
-        self.engine = pyttsx3.init()
-        self._configure_voice()
+    response = client.audio.speech.create(
+        model="tts-1",
+        voice="alloy",   
+        input=text,
+    )
 
-    def _configure_voice(self):
-        rate = self.engine.getProperty('rate')
-        self.engine.setProperty('rate', int(rate * 0.9)) 
+    with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as tmp:
+        tmp_path = tmp.name
+        response.stream_to_file(tmp_path)
 
-        voices = self.engine.getProperty('voices')
-
-        selected_voice = None
-
-        for voice in voices:
-            name = voice.name.lower()
-
-            if "female" in name or "zira" in name or "anna" in name:
-                selected_voice = voice.id
-                break
-
-        if not selected_voice and voices:
-            selected_voice = voices[0].id
-
-        if selected_voice:
-            self.engine.setProperty('voice', selected_voice)
-
-    def speak(self, text: str):
-        if not text:
-            return
-
-        try:
-            self.engine.say(text)
-            self.engine.runAndWait()
-        except Exception as e:
-            print(f"[TTS Error]: {e}")
-
-
-tts_instance = TextToSpeech()
-
-
-def speak(text: str):
-    tts_instance.speak(text)
+    try:
+        if os.name == "nt":  # Windows
+            os.startfile(tmp_path)
+        elif os.uname().sysname == "Darwin":  # macOS
+            subprocess.run(["afplay", tmp_path], check=True)
+        else:  # Linux
+            subprocess.run(["mpg123", tmp_path], check=True)
+    finally:
+        os.unlink(tmp_path)
