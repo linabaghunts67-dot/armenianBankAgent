@@ -6,7 +6,6 @@
   <img src="https://img.shields.io/badge/Python-3.10+-blue?style=flat-square"/>
   <img src="https://img.shields.io/badge/OpenAI-GPT--4o--mini-black?style=flat-square"/>
   <img src="https://img.shields.io/badge/Voice-AI-orange?style=flat-square"/>
-  <img src="https://img.shields.io/badge/Status-Internship--Ready-success?style=flat-square"/>
 </p>
 
 ---
