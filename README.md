@@ -1,4 +1,4 @@
-# 🎙️ Armenian Voice AI Bank Assistant
+# 🎙️ Armenian Voice AI Bank Assistant — UPDATED
 
 A real-time, voice-enabled AI agent that answers customer questions in Armenian about **credits, deposits, and branch locations** for three Armenian banks — strictly grounded in scraped data from their official websites.
 
@@ -86,7 +86,6 @@ armenianBankAgent/
     │       ├── __init__.py
     │       ├── stt.py              # STT (CLI mode fallback)
     │       └── tts.py              # TTS using OpenAI (Armenian-capable)
-    ├── .env.example                # Template for environment variables
     ├── requirements.txt
     └── README.md
 ```
