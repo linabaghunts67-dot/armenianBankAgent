@@ -14,9 +14,8 @@ import sys
 
 
 def run_livekit_mode():
-    print("🚀 Starting LiveKit Voice Agent...")
-    print("   Make sure LIVEKIT_URL, LIVEKIT_API_KEY, LIVEKIT_API_SECRET are set in .env")
-    print("   Waiting for users to join the LiveKit room...\n")
+    print("Starting LiveKit Voice Agent...")
+    print("Waiting for users to join the LiveKit room...\n")
     subprocess.run([sys.executable, "-m", "src.livekit_agent"], check=True)
 
 
