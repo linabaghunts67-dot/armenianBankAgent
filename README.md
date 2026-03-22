@@ -1,4 +1,4 @@
-# 🎙️ Armenian Voice AI Bank Assistant — UPDATED
+# 🎙️ Armenian Voice AI Bank Assistant
 
 A real-time, voice-enabled AI agent that answers customer questions in Armenian about **credits, deposits, and branch locations** for three Armenian banks — strictly grounded in scraped data from their official websites.
 
