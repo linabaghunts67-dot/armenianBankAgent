@@ -7,6 +7,7 @@ Why OpenAI TTS instead of pyttsx3:
 """
 
 import os
+import sys
 import tempfile
 import subprocess
 from openai import OpenAI
@@ -29,11 +30,11 @@ def speak(text: str) -> None:
         response.stream_to_file(tmp_path)
 
     try:
-        if os.name == "nt":  # Windows
+        if sys.platform == "win32":       # Windows
             os.startfile(tmp_path)
-        elif os.uname().sysname == "Darwin":  # macOS
+        elif sys.platform == "darwin":    # macOS
             subprocess.run(["afplay", tmp_path], check=True)
-        else:  # Linux
+        else:                             # Linux
             subprocess.run(["mpg123", tmp_path], check=True)
     finally:
         os.unlink(tmp_path)
