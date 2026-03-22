@@ -1,17 +1,14 @@
 """
-stt.py — Speech-to-Text using Google Speech Recognition with Armenian locale.
-
-Uses the SpeechRecognition library with Google's backend (hy-AM locale).
-This is the fallback CLI mode. The LiveKit agent uses Deepgram for real-time STT.
+stt.py — Speech-to-Text using Google Speech Recognition with Armenian locale (hy-AM).
+This is the CLI fallback mode. The LiveKit agent uses Deepgram for real-time STT.
 """
 
 import speech_recognition as sr
 
 
 def listen() -> str:
-    """Listen from the microphone and return Armenian transcription."""
     recognizer = sr.Recognizer()
-    recognizer.pause_threshold = 1.0  
+    recognizer.pause_threshold = 1.0
 
     with sr.Microphone() as source:
         print("Խոսեք... (Speak in Armenian)")
