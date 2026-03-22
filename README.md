@@ -1,62 +1,96 @@
+<div align="center">
+
 # 🎙️ Armenian Voice AI Bank Assistant
 
-A real-time, voice-enabled AI agent that answers customer questions in Armenian about **credits, deposits, and branch locations** for three Armenian banks — strictly grounded in scraped data from their official websites.
+<p>A real-time voice AI agent that answers customer questions <strong>in Armenian</strong> about credits, deposits, and branch locations — strictly grounded in data scraped from official bank websites.</p>
 
-Built with the **open-source LiveKit Agents framework** (not LiveKit Cloud).
+![Python](https://img.shields.io/badge/Python-3.10+-blue?style=for-the-badge&logo=python&logoColor=white)
+![LiveKit](https://img.shields.io/badge/LiveKit-Open--Source-orange?style=for-the-badge&logo=webrtc&logoColor=white)
+![OpenAI](https://img.shields.io/badge/OpenAI-GPT--4o--mini-black?style=for-the-badge&logo=openai&logoColor=white)
+![Deepgram](https://img.shields.io/badge/Deepgram-Armenian_STT-green?style=for-the-badge&logo=microphone&logoColor=white)
+
+</div>
 
 ---
 
-## 🏗️ Architecture & Design Decisions
+## 📁 Project Structure
+```
+voice-ai-bank-agent/
+├── data/
+│   └── bank_data.json          # Scraped bank data
+├── scraper/
+│   └── scraper.py              # Scrapes 3 Armenian bank websites
+├── src/
+│   ├── voice/
+│   │   ├── stt.py              # Speech-to-Text (Google, hy-AM)
+│   │   └── tts.py              # Text-to-Speech (OpenAI TTS)
+│   ├── ai.py                   # LLM engine + guardrails
+│   ├── livekit_agent.py        # Real-time LiveKit agent
+│   └── main.py                 # Entry point
+├── requirements.txt
+└── README.md
+```
 
-### System Architecture
+---
 
+## 🏗️ Architecture
+
+### Full Pipeline
 ```
 User Microphone
-      ↓
-LiveKit Room (WebRTC, self-hosted open-source server)
-      ↓
-Deepgram Nova-2 STT  ←── Armenian language (hy)
-      ↓
-GPT-4o-mini (with injected bank context)
-      ↓
-OpenAI TTS (alloy voice)
-      ↓
+      │
+      ▼
+LiveKit Room (WebRTC — self-hosted open-source server)
+      │
+      ▼
+Silero VAD (filters silence)
+      │
+      ▼
+Deepgram Nova-2 STT (language: hy — Armenian)
+      │
+      ▼
+GPT-4o-mini ◄── bank_data.json injected as system context
+(only credits / deposits / branch locations allowed)
+      │
+      ▼
+OpenAI TTS (alloy voice — supports Armenian)
+      │
+      ▼
 LiveKit Room → User Speaker
 ```
 
+### CLI Mode (local testing, no LiveKit needed)
+```
+Microphone → SpeechRecognition (hy-AM) → GPT-4o-mini → OpenAI TTS → Speaker
+```
+
+---
+
+## 🧠 Design Decisions
+
 ### Why LiveKit Open-Source?
+The requirement specifies open-source LiveKit, not LiveKit Cloud. We use the `livekit-agents` Python SDK with a **self-hosted LiveKit server via Docker** — full WebRTC audio pipeline with no dependency on any commercial cloud.
 
-The requirement specifies open-source LiveKit, not LiveKit Cloud. We use:
-- `livekit-agents` SDK — the official Python framework for building voice agents
-- A **self-hosted LiveKit server** (runs locally via Docker or binary)
-- This gives full real-time WebRTC audio streaming with VAD (Voice Activity Detection)
-
-### Why Deepgram for STT?
-
-Deepgram Nova-2 is the best production-grade STT with Armenian (`hy`) language support available as a LiveKit plugin. It offers low latency (~300ms) and accurate transcription for Armenian speech.
+### Why Deepgram Nova-2 for STT?
+Deepgram is the only production-grade STT with Armenian (`hy`) support available as a native LiveKit plugin. Latency is ~300ms — fast enough for natural conversation. Whisper alternatives average ~1–2s which feels sluggish in voice chat.
 
 ### Why GPT-4o-mini?
-
-- **Armenian language support**: natively understands and generates Armenian text
-- **Speed**: ~1–2s response time, suitable for voice conversations
-- **Cost**: significantly cheaper than GPT-4o, and more than sufficient for constrained Q&A over a small knowledge base
-- **Guardrails**: temperature set to 0.1 to minimize hallucination; the system prompt strictly restricts answers to provided context only
+- Natively understands and generates Armenian
+- ~1–2s response time — suitable for real-time voice
+- ~15× cheaper than GPT-4o, more than sufficient for constrained Q&A
+- Temperature set to `0.1` to minimize hallucination
 
 ### Why OpenAI TTS instead of pyttsx3?
-
-`pyttsx3` uses the OS's built-in voice engine (espeak on Linux, SAPI on Windows). **No major OS ships an Armenian voice**, so pyttsx3 either fails silently or speaks English phonetics. OpenAI TTS (`tts-1`, `alloy` voice) natively supports Armenian text with natural pronunciation.
+`pyttsx3` uses the OS built-in voice engine. **No OS ships an Armenian voice** — it would either crash or mispronounce everything. OpenAI TTS (`alloy` voice) natively handles Armenian script with natural pronunciation.
 
 ### Guardrails
-
-The LLM is given a strict system prompt that:
-1. Injects all scraped bank data as the **only allowed knowledge source**
-2. Restricts answers to three topics: credits, deposits, branch locations
-3. Forces an Armenian refusal message for any out-of-scope question:
-   > "Ես չեմ կարող պատասխանել այդ հարցին։ Կարող եմ օգնել միայն վարկերի, ավանդների և մասնաճյուղերի վերաբերյալ հարցերում։"
+The system prompt:
+1. Injects all of `bank_data.json` as the **only permitted knowledge**
+2. Restricts answers to: credits, deposits, branch locations
+3. Returns a fixed Armenian refusal for anything else:
+> *"Ես չեմ կարող պատասխանել այդ հարցին։ Կարող եմ օгнел миайն варкери, авандери ев маснаjyughneri веraberjal харцеrum։"*
 
 ### Data Sources
-
-Bank data is scraped from the official websites of three Armenian banks:
 
 | Bank | Website |
 |------|---------|
@@ -64,88 +98,57 @@ Bank data is scraped from the official websites of three Armenian banks:
 | Ardshinbank | https://www.ardshinbank.am |
 | ACBA Bank | https://www.acba.am |
 
-The scraper fetches credits, deposits, and branch location pages from each bank and saves them to `data/bank_data.json`. The system is designed to scale to any number of banks — just add entries to `scraper/scraper.py`.
+Adding a new bank = adding 3 lines to `SCRAPE_TARGETS` in `scraper/scraper.py`.
 
 ---
 
-## 📁 Project Structure
+## ⚙️ Setup & Run
 
-```
-armenianBankAgent/
-└── voice-ai-bank-agent/
-    ├── data/
-    │   └── bank_data.json          # Scraped bank data (auto-generated)
-    ├── scraper/
-    │   └── scraper.py              # Web scraper for bank websites
-    ├── src/
-    │   ├── __init__.py
-    │   ├── main.py                 # Entry point (LiveKit or CLI mode)
-    │   ├── ai.py                   # LLM logic + context injection + guardrails
-    │   ├── livekit_agent.py        # Real LiveKit open-source agent
-    │   └── voice/
-    │       ├── __init__.py
-    │       ├── stt.py              # STT (CLI mode fallback)
-    │       └── tts.py              # TTS using OpenAI (Armenian-capable)
-    ├── requirements.txt
-    └── README.md
-```
-
----
-
-## ⚙️ Setup & Run Guide
-
-### 1. Clone the repository
-
+### 1. Clone the repo
 ```bash
 git clone https://github.com/linabaghunts67-dot/armenianBankAgent.git
 cd armenianBankAgent/voice-ai-bank-agent
 ```
 
-### 2. Create a virtual environment
-
+### 2. Create virtual environment
 ```bash
 python -m venv venv
 
-# Activate:
 # Windows:
 venv\Scripts\activate
-# Mac/Linux:
+
+# macOS / Linux:
 source venv/bin/activate
 ```
 
 ### 3. Install dependencies
-
 ```bash
 pip install -r requirements.txt
 ```
-
-> **Linux note**: If PyAudio fails, install portaudio first: `sudo apt-get install portaudio19-dev`
-> **Linux TTS note**: Install mpg123 for audio playback: `sudo apt-get install mpg123`
+> **Linux:** `sudo apt-get install portaudio19-dev mpg123`
 
 ### 4. Set up environment variables
-
 ```bash
 cp .env.example .env
 ```
+Fill in `.env`:
+```env
+OPENAI_API_KEY=your_openai_api_key
+DEEPGRAM_API_KEY=your_deepgram_api_key
+LIVEKIT_URL=ws://localhost:7880
+LIVEKIT_API_KEY=devkey
+LIVEKIT_API_SECRET=secret
+```
 
-Edit `.env` and fill in:
-- `OPENAI_API_KEY` — from https://platform.openai.com
-- `DEEPGRAM_API_KEY` — from https://console.deepgram.com (free tier works)
-- `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET` — from your local LiveKit server (see below)
-
-### 5. Start a local LiveKit server
-
+### 5. Start local LiveKit server
 ```bash
-# Using Docker (recommended):
-docker run --rm -p 7880:7880 -p 7881:7881 -p 7882:7882/udp \
+docker run --rm \
+  -p 7880:7880 -p 7881:7881 -p 7882:7882/udp \
   -e LIVEKIT_KEYS="devkey: secret" \
   livekit/livekit-server --dev
 ```
 
-Or download the binary from https://github.com/livekit/livekit/releases
-
-### 6. Scrape bank data (optional — pre-scraped data is included)
-
+### 6. (Optional) Re-scrape bank data
 ```bash
 python scraper/scraper.py
 ```
@@ -157,35 +160,34 @@ python scraper/scraper.py
 python -m src.main --mode livekit
 ```
 
-Then connect a client to your LiveKit room (e.g. using the LiveKit Meet example app or any WebRTC client).
-
-**CLI mode** (local microphone testing, no LiveKit needed):
+**CLI mode** (local mic, no LiveKit needed):
 ```bash
 python -m src.main --mode cli
 ```
 
 ---
 
-## 🧪 Example Interaction
-
+## 🧪 Example
 ```
-🎤 Speak... (Speak in Armenian)
-Դուք: Ի՞նչ ավանդներ ունի Ամերիաբանկը
-AI: Ամերիաբանկում հնարավոր է բացել ժամկետային ավանդներ ՀՀ դրամով, ԱՄՆ դոլարով և եվրոյով։ ...
+🎤 Speak...
+Դուք:  Ի՞նչ ավանդներ ունի Ամերիաբանկը
+AI:    Ամերիաբանկում հնարավոր է բացել ժամկետային ավանդներ ՀՀ դրամով, ԱՄՆ դոլարով և եվրոյով։
 
 🎤 Speak...
-Դուք: Ո՞րն է լավ ռեստորան Երևանում
-AI: Ես չեմ կարող պատասխանել այդ հարցին։ Կարող եմ օգնել միայն վարկերի, ավանդների և մասնաճյուղերի վերաբերյալ հարցերում։
+Դուք:  Ո՞ր ռեստորանն է լավ Երևանում
+AI:    Ես չեմ կարող պատասխանել այդ հարցին։ Կարող եմ օгнел миайн варкери, авандери ев маснаjyughneri веraberjal харцеrum։
 ```
 
 ---
 
 ## 🛠️ Tech Stack
 
-| Component | Technology | Reason |
-|-----------|-----------|--------|
-| Voice framework | LiveKit Agents (open-source) | Required; real-time WebRTC |
-| STT | Deepgram Nova-2 | Best Armenian support, low latency |
+| Component | Technology | Why |
+|-----------|-----------|-----|
+| Voice framework | LiveKit Agents (open-source) | Real-time WebRTC, self-hosted |
+| VAD | Silero | Filters silence, reduces API costs |
+| STT | Deepgram Nova-2 (`hy`) | Best Armenian STT, ~300ms latency |
 | LLM | GPT-4o-mini | Armenian support, fast, cheap |
-| TTS | OpenAI TTS (alloy) | Native Armenian, unlike pyttsx3 |
-| Data | Scraped JSON (beautifulsoup4) | Grounded, no hallucination |
+| TTS | OpenAI TTS (`alloy`) | Native Armenian — pyttsx3 has no Armenian voice |
+| Scraping | requests + BeautifulSoup4 | Lightweight HTML parsing |
+| Knowledge Base | JSON | Simple, inspectable, version-controlled |
