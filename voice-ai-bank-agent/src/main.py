@@ -4,7 +4,7 @@ main.py — Entry point for the Armenian Voice AI Banking Assistant.
 Two modes:
   1. LiveKit mode (default): Full real-time voice pipeline via LiveKit open-source server.
      Run: python -m src.main --mode livekit
-  2. CLI mode (fallback for local testing):
+  2. CLI mode (fallback for local testing without LiveKit):
      Run: python -m src.main --mode cli
 """
 
@@ -14,22 +14,20 @@ import sys
 
 
 def run_livekit_mode():
-    """Start the LiveKit agent worker. Connects to your self-hosted LiveKit server."""
-    print("Starting LiveKit Voice Agent...")
+    print("🚀 Starting LiveKit Voice Agent...")
     print("   Make sure LIVEKIT_URL, LIVEKIT_API_KEY, LIVEKIT_API_SECRET are set in .env")
     print("   Waiting for users to join the LiveKit room...\n")
     subprocess.run([sys.executable, "-m", "src.livekit_agent"], check=True)
 
 
 def run_cli_mode():
-    """CLI fallback: mic → STT → GPT → TTS loop for local testing without LiveKit."""
     from src.ai import load_data, ask_ai
     from src.voice.stt import listen
     from src.voice.tts import speak
 
-    print("Armenian Bank Assistant — CLI Mode")
+    print("🎙️ Armenian Bank Assistant — CLI Mode")
     print("   Topics: credits (վարկեր), deposits (ավանդներ), branches (մասնաճյուղեր)")
-    print("   Type 'exit' or say 'exit' to quit.\n")
+    print("   Say 'exit' to quit.\n")
 
     data = load_data()
 
@@ -40,7 +38,7 @@ def run_cli_mode():
             continue
 
         if user_input.strip().lower() in {"exit", "quit", "դուրս"}:
-            print("Goodbye / Ցտեսություն")
+            print("Ցտեսություն!")
             break
 
         response = ask_ai(user_input, data)
