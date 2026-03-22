@@ -1,14 +1,5 @@
 """
 livekit_agent.py — Real LiveKit open-source agent using livekit-agents SDK.
-
-Architecture:
-  User microphone → LiveKit room (STT via Deepgram) → GPT-4o-mini (context-grounded)
-  → TTS via OpenAI TTS → LiveKit room → User speaker
-
-Why these models:
-  - Deepgram Nova-2: best Armenian STT available via LiveKit plugin, low latency
-  - GPT-4o-mini: supports Armenian, fast, cheap, sufficient for constrained Q&A
-  - OpenAI TTS (alloy): supports Armenian output reliably, unlike pyttsx3 which has no Armenian voice
 """
 
 import json
@@ -26,10 +17,8 @@ BANK_DATA_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "bank_dat
 
 
 def load_bank_context() -> str:
-    """Load scraped bank data and format as context string."""
     with open(BANK_DATA_PATH, "r", encoding="utf-8") as f:
         data = json.load(f)
-
     context_blocks = []
     for entry in data:
         context_blocks.append(
@@ -40,24 +29,21 @@ def load_bank_context() -> str:
 
 def build_system_prompt() -> str:
     context = load_bank_context()
-    return f"""Դու հայկական բանկային AI օգնական ես։
+    return f"""Դու հայկական բանկային AI օгнական ես։
 
 ԽԻՍՏ ԿԱՆՈՆՆԵՐ:
-- Պատասխանիր ԲԱՑԱՌԱՊԵՍ ստորև տրված բանկային տվյալների հիման վրա։
-- Թույլատրված թեմաներ: վարկեր (credits), ավանդներ (deposits), մասնաճյուղերի հասցեներ (branch locations)։
-- Եթե հարցը վերաբերում է այլ թեմայի → պատասխանիր. "Ես չեմ կարող պատասխանել այդ հարցին։ Կարող եմ օգնել միայն վարկերի, ավանդների և մասնաճյուղերի վերաբերյալ հարցերում։"
-- ՄԻ օգտագործիր արտաքին գիտելիքներ կամ ենթադրություններ։
-- Պատասխանիր հայերեն։
-- Կարճ, հստակ, ճշգրիտ պատասխաններ տուր։
+- Պատасхanիր ԲАЦАՌАПЕС ստорев тrvyal բанкային тvyalneri himann vra:
+- Թуylатrvyal теманер: varker, avandner, masnajyugher:
+- Аyл тема → "Ес чем карог патасхanel аyт харцин:"
+- МИ оgтаgорциr артакин гителикнер:
+- Патасхaniр hайерен:
 
-ԲԱՆԿԱՅԻՆ ՏՎՅԱԼՆԵՐ (միայն սրանք օգտագործիր):
+ԲԱՆԿԱՅԻՆ ՏՎՅԱԼՆԵՐ:
 {context}
 """
 
 
 async def entrypoint(ctx: JobContext):
-    """Main LiveKit agent entrypoint — called when a user connects to the room."""
-
     system_prompt = build_system_prompt()
 
     initial_chat_ctx = llm.ChatContext().append(
@@ -68,10 +54,10 @@ async def entrypoint(ctx: JobContext):
     await ctx.connect(auto_subscribe=AutoSubscribe.AUDIO_ONLY)
 
     assistant = VoiceAssistant(
-        vad=silero.VAD.load(),                          
-        stt=deepgram.STT(language="hy"),                
-        llm=openai.LLM(model="gpt-4o-mini"),            
-        tts=openai.TTS(voice="alloy"),                
+        vad=silero.VAD.load(),
+        stt=deepgram.STT(language="hy"),
+        llm=openai.LLM(model="gpt-4o-mini"),
+        tts=openai.TTS(voice="alloy"),
         chat_ctx=initial_chat_ctx,
     )
 
@@ -79,12 +65,10 @@ async def entrypoint(ctx: JobContext):
 
     await asyncio.sleep(1)
     await assistant.say(
-        "Բարև ձեզ։ Ես հայկական բանկային AI օգնականն եմ։ Կարող եմ օգնել վարկերի, ավանդների և մասնաճյուղերի վերաբերյալ հարցերում։",
+        "Բարև ձեզ։ Ես հայկական բանկային AI օгнականն еm։ Карог еm оgnеl varkerи, avandneri еv masnajyughneri vеraberjal харцеrum։",
         allow_interruptions=True,
     )
 
 
 if __name__ == "__main__":
-    cli.run_app(
-        WorkerOptions(entrypoint_fnc=entrypoint)
-    )
+    cli.run_app(WorkerOptions(entrypoint_fnc=entrypoint))
