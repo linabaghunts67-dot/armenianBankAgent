@@ -33,7 +33,7 @@ def build_context(data: list) -> str:
 
 
 def build_system_prompt(context: str) -> str:
-    return f"""Դու հայկական բանկային AI օգտակար ես։
+    return f"""Դու հայկական բանկային AI օգնական ես։
 
 ԽԻՍՏ ԿԱՆՈՆՆԵՐ
 
