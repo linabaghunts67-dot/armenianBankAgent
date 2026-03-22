@@ -1,6 +1,5 @@
 """
 ai.py — Context-grounded AI engine for Armenian banking assistant.
-
 Loads scraped bank data and injects it as strict context into the LLM prompt.
 The model is instructed to ONLY answer from this data.
 """
@@ -12,20 +11,16 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-ALLOWED_TOPICS = {"credits", "deposits", "branch_locations"}
-
 
 def load_data(path=None):
     if path is None:
         base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         path = os.path.join(base, "data", "bank_data.json")
-
     with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
 
 
 def build_context(data: list) -> str:
-    """Format bank data entries as a readable context block for the LLM."""
     blocks = []
     for entry in data:
         blocks.append(
@@ -38,23 +33,22 @@ def build_context(data: list) -> str:
 
 
 def build_system_prompt(context: str) -> str:
-    return f"""Դու հայկական բանկային AI օգնական ես։
+    return f"""Դու հայկական բանկային AI օгнական ես։
 
 ԽԻՍՏ ԿԱՆՈՆՆԵՐ:
-1. Պատասխանիր ԲԱՑԱՌԱՊԵՍ ստորև տրված ԲԱՆԿԱՅԻՆ ՏՎՅԱԼՆԵՐԻ հիման վրա։
-2. Թույլատրված թեմաներ՝ վարկեր, ավանդներ, մասնաճյուղերի հասցեներ։
-3. Եթե հարցը չի վերաբերում այս թեմաներին, կամ տեղեկությունը բացակայում է տվյալներում, ասա.
-   "Ես չեմ կարող պատասխանել այդ հարցին։ Կարող եմ օգնել միայն վարկերի, ավանդների և մասնաճյուղերի վերաբերյալ հարցերում։"
-4. ՄԻ հնարիր, ՄԻ ենթադրիր, ՄԻ օգտագործիր արտաքին գիտելիք։
-5. Պատասխանիր հայերեն՝ կարճ և հստակ։
+1. Պատасхanիր ԲАЦАՌАПЕС ստорев тrvyal ԲАНКԱՅԻՆ ТVЯLНЕРI himann vra:
+2. Թуylатrvyal теманер՝ varker, avandner, masnajyugher:
+3. Еthе harцe chi vеrabеrum аys теmanеrin → аsa:
+   "Ес чем карог патасхanel аyт харцин: Карог еm оgnеl миайн варкери, авандери ев маснаjyughneri веLaberjal харцеrum:"
+4. МИ hnari, МИ еnthadrir, МИ оgтаgорциr артакин гителик:
+5. Патасхaniр hайерен՝ карч ев hstак:
 
-ԲԱՆԿԱՅԻՆ ՏՎՅԱԼՆԵՐ:
+ԲАНКԱՅԻՆ ТVЯLНЕР:
 {context}
 """
 
 
 def ask_ai(user_input: str, data: list) -> str:
-    """Send user question to GPT with bank context. Returns Armenian response."""
     client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
     context = build_context(data)
@@ -62,11 +56,11 @@ def ask_ai(user_input: str, data: list) -> str:
 
     response = client.chat.completions.create(
         model="gpt-4o-mini",
-        temperature=0.1, 
+        temperature=0.1,
         messages=[
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_input},
         ],
     )
 
-    return response.choices[0].message.content.strip()
+    return response.choices[0].message.content.strip()ssage.content.strip()
