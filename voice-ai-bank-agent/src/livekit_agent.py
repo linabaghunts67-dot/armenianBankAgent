@@ -1,5 +1,10 @@
 """
 livekit_agent.py — Real LiveKit open-source agent using livekit-agents SDK.
+
+Why these models:
+  - Deepgram Nova-2: best Armenian STT available via LiveKit plugin, low latency
+  - GPT-4o-mini: supports Armenian, fast, cheap, sufficient for constrained Q&A
+  - OpenAI TTS (alloy): supports Armenian output reliably, unlike pyttsx3
 """
 
 import json
@@ -22,7 +27,9 @@ def load_bank_context() -> str:
     context_blocks = []
     for entry in data:
         context_blocks.append(
-            f"Բանկ: {entry['bank']}\nՈլորտ: {entry['topic']}\nՏեղեկություն: {entry['content']}"
+            f"Բանկ: {entry['bank']}\n"
+            f"Ոլորտ: {entry['topic']}\n"
+            f"Տեղեկություն: {entry['content']}"
         )
     return "\n\n".join(context_blocks)
 
@@ -31,16 +38,15 @@ def build_system_prompt() -> str:
     context = load_bank_context()
     return f"""Դու հայկական բանկային AI օգնական ես։
 
-ԽԻՍՏ ԿԱՆՈՆՆԵՐ
-Պատասխանիր բացառապես ստորև տրված բանկային տվյալների հիման վրա։
-Թույլատրելի թեմաներ՝ վարկեր, ավանդներ, մասնաճյուղեր։
-Այլ թեմաների դեպքում ասա՝
-«Ես չեմ կարող պատասխանել այդ հարցին»։
-Մի օգտագործիր արտաքին գիտելիքներ։
-Պատասխանիր հայերեն։
+ԽԻՍՏ ԿԱՆՈՆՆԵՐ:
+- Պատասխանիր ԲԱՑԱՌԱՊԵՍ ստորև տրված բանկային տվյալների հիման վրա։
+- Թույլատրված թեմաներ: վարկեր, ավանդներ, մասնաճյուղերի հասցեներ։
+- Եթե հարցը վերաբերում է այլ թեմայի, պատասխանիր. "Ես չեմ կարող պատասխանել այդ հարցին։ Կարող եմ օգնել միայն վարկերի, ավանդների և մասնաճյուղերի վերաբերյալ հարցերում։"
+- ՄԻ օգտագործիր արտաքին գիտելիքներ կամ ենթադրություններ։
+- Պատասխանիր հայերեն։
+- Կարճ, հստակ, ճշգրիտ պատասխաններ տուր։
 
-ԲԱՆԿԱՅԻՆ ՏՎՅԱԼՆԵՐ
-
+ԲԱՆԿԱՅԻՆ ՏՎՅԱԼՆԵՐ (միայն սրանք օգտագործիր):
 {context}
 """
 
@@ -67,7 +73,7 @@ async def entrypoint(ctx: JobContext):
 
     await asyncio.sleep(1)
     await assistant.say(
-        "Բարև ձեզ։ Ես հայկական բանկային AI օգնական еm։ Կարող եմ օգնել վարկերի, ավանդների և մասնաճյուղերի վերաբերյալ հարցերում։",
+        "Բարև ձեզ։ Ես հայկական բանկային AI օգնականն եմ։ Կարող եմ օգնել վարկերի, ավանդների և մասնաճյուղերի վերաբերյալ հարցերում։",
         allow_interruptions=True,
     )
 
